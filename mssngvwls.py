@@ -2,17 +2,14 @@ from bs4 import BeautifulSoup
 import random
 import string
 import re
-try:
-  import urllib2
-except ImportError:
-  # Python 3...
-  import urllib as urllib2
+import urllib.request
 
 def parse_wiki_page(url):
-  request = urllib2.Request(url)
-  request.add_header('User-Agent', 'Firefox ish')
-  html = urllib2.build_opener().open(request).read()
-  soup = BeautifulSoup(html)
+  request = urllib.request.Request(url, headers=
+          {
+ 'User-Agent': 'Firefox ish'})
+  html = urllib.request.urlopen(request).read()
+  soup = BeautifulSoup(html, features="html.parser")
 
   def extract_items(list):
     return map(lambda li: li.text.encode('ascii', 'ignore'), list.select('li'))
@@ -40,25 +37,34 @@ def test_with(list_array):
     sample = random.choice(list_array).upper()
     smpl = re.sub('[AEIOU ]', '', sample)
 
-    spaces = random.sample(range(1, len(smpl)), len(smpl) / 3)    
+    spaces = random.sample(range(1, len(smpl)), len(smpl) / 3)
     for space in spaces:
       smpl = insert(smpl, space)
 
-    guess = raw_input(smpl + '\n')
+    guess = input(smpl + '\n')
     if guess.upper() == sample:
-      raw_input("You're right!\n")
+      input("You're right!\n")
     else:
-      raw_input("Actually, it was " + sample + "\n")
+      input("Actually, it was " + sample + "\n")
     pass
 
+def create_list_option(index, list_option):
+  print(list_option)
+  return str(index) + ': ' + re.sub('[\n\r]', '', str(random.choice(list(list_option))))
+
 if __name__ == "__main__":
-  url = raw_input('Enter the URL of a page that has a list or table I can test you on:\n')
+  print(create_list_option(0, ['a', 'b']))
+
+  url = input('Enter the URL of a page that has a list or table I can test you on:\n')
   content = parse_wiki_page(url)
 
-  content = [c for c in content if len(c) > 0]
+  content = [list(c) for c in content if len(list(c))]
+  print(content)
 
-  list_index = input('\nChoose a list to play with (based on a random sample):\n' + 
-    string.join([str(i) + ': ' + re.sub('[\n\r]', '', random.choice(list)) for i,list in enumerate(content)], '\n')+'\n')
+  content_options = [create_list_option(i, l) for i,l in enumerate(content)]
+  list_index = input('\nChoose a list to play with (based on a random sample):\n' +
+    '\n'.join(content_options)+'\n')
+
   chosen_list = content[list_index]
-  
+
   test_with(chosen_list)
